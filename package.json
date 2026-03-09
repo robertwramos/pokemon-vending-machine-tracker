@@ -1,0 +1,47 @@
+{
+  "name": "pokemon-vending-machine-bot",
+  "version": "1.0.0",
+  "description": "Discord bot for tracking Pokemon vending machine restocks and checks",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "deploy:commands": "ts-node src/deploy-commands.ts",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "db:seed": "prisma db seed",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.10.0",
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5",
+    "geo-tz": "^7.0.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.3",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.11.30",
+    "eslint": "^9.39.3",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "jest": "^30.2.0",
+    "prettier": "^3.8.1",
+    "prisma": "^5.10.0",
+    "ts-jest": "^29.4.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.2",
+    "typescript-eslint": "^8.56.1"
+  }
+}

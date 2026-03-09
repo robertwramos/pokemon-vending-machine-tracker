@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model VendingMachine {
+  id           Int      @id @default(autoincrement())
+  store        String
+  address      String
+  machineId    String   @unique
+  crossStreets String?
+  city         String
+  state        String
+  zip          String
+  country        String?
+  latitude       Float?
+  longitude      Float?
+  status         String   @default("unknown")
+  lastCheckedAt  DateTime?
+  lastCheckedBy  String?
+  restockedAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  machineCheckIns  MachineCheckIn[]
+  machineRestocks  MachineRestock[]
+  machineMessages  MachineMessage[]
+}
+
+model MachineMessage {
+  id               Int            @id @default(autoincrement())
+  vendingMachineId Int
+  vendingMachine   VendingMachine @relation(fields: [vendingMachineId], references: [id])
+  channelId        String
+  guildId          String
+  messageId        String         @unique
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@unique([vendingMachineId, channelId])
+  @@index([channelId])
+}
+
+model MachineCheckIn {
+  id                   Int      @id @default(autoincrement())
+  vendingMachineId     Int
+  vendingMachine       VendingMachine @relation(fields: [vendingMachineId], references: [id])
+  checkedAt            DateTime @default(now())
+  checkedBy            String
+  packAvailable        Boolean  @default(false)
+  boosterBundleAvailable Boolean @default(false)
+  etbAvailable         Boolean  @default(false)
+  boosterBoxAvailable  Boolean  @default(false)
+  tinAvailable         Boolean  @default(false)
+  outOfStock           Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([vendingMachineId])
+  @@index([checkedAt])
+}
+
+model MachineRestock {
+  id               Int            @id @default(autoincrement())
+  vendingMachineId Int
+  vendingMachine   VendingMachine @relation(fields: [vendingMachineId], references: [id])
+  restockedAt      DateTime
+  reportedBy       String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([vendingMachineId])
+  @@index([restockedAt])
+}
