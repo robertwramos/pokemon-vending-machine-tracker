@@ -39,8 +39,7 @@ Then edit `.env` and fill in the values:
 | `DISCORD_TOKEN`     | Your bot token from the Discord Developer Portal                            |
 | `CLIENT_ID`         | Your application's client ID                                                |
 | `GUILD_ID`          | *(Optional)* A single guild ID for instant command registration during dev  |
-| `DATABASE_PROVIDER` | Prisma database provider (e.g. `sqlite`, `postgresql`)                      |
-| `DATABASE_URL`      | Database connection URL (e.g. `file:./dev.db` for SQLite)                   |
+| `DATABASE_URL`      | MySQL connection URL (e.g. `mysql://user:pass@localhost:3306/dbname`)        |
 
 > Omitting `GUILD_ID` will register commands globally (can take up to 1 hour to propagate).
 
@@ -59,11 +58,10 @@ npm run deploy:commands
 **5. Start the bot**
 
 ```bash
-# Development (ts-node, hot-friendly)
+# Development (ts-node, no compile step)
 npm run dev
 
-# Production (compile first, then run)
-npm run build
+# Production (full bootstrap: install, build, migrate, seed, deploy commands, then run)
 npm start
 ```
 
@@ -75,7 +73,7 @@ npm start
 | `/deploy-by-zipcode` | Manage Channels | Post all machines for a zip code to the current channel |
 | `/remove-machine` | Manage Channels | Remove a specific machine post from the current channel |
 | `/remove-machines` | Manage Channels | Remove all machine posts from the current channel |
-| `/set-crossroads` | Manage Channels | Set cross street landmarks for a machine |
+| `/set-cross-streets` | Manage Channels | Set cross street landmarks for a machine |
 | `/add-past-check-in` | Everyone | Retroactively log a check-in with a past date and time |
 
 ### Machine card buttons
