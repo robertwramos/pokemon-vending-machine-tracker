@@ -10,7 +10,7 @@
     "deploy:commands": "ts-node src/deploy-commands.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:push": "prisma db push",
+    "db:push": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "db:seed": "prisma db seed",
     "lint": "eslint .",
