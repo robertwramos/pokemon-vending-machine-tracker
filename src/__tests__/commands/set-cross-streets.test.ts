@@ -1,5 +1,5 @@
 import type { AutocompleteInteraction, ChatInputCommandInteraction } from 'discord.js';
-import { execute, autocomplete } from '../../commands/set-crossroads';
+import { execute, autocomplete } from '../../commands/set-cross-streets';
 import prisma from '../../lib/prisma';
 
 jest.mock('../../lib/prisma', () => ({
@@ -19,10 +19,11 @@ const mockPrisma = prisma as unknown as {
   machineMessage: { findMany: jest.Mock };
 };
 
-const mockMachine = { id: 1, machineId: 'SF001', store: 'Safeway', crossStreets: null };
+const mockMachine = { id: 1, machineId: 'SF001', store: 'Safeway', address: '123 Main St', crossStreets: null };
 
-function makeInteraction(machineId = 'SF001', crossroads = 'Main St & Oak Ave') {
+function makeInteraction(machineId = 'SF001', crossroads = 'Main St & Oak Ave', channelId = 'ch-123') {
   return {
+    channelId,
     options: {
       getString: jest.fn((key: string) => (key === 'machine_id' ? machineId : crossroads)),
       getFocused: jest.fn().mockReturnValue(''),
@@ -38,19 +39,42 @@ beforeEach(() => {
 });
 
 describe('autocomplete', () => {
-  it('returns machines matching the focused value', async () => {
+  it('returns only machines in the current channel with address in the label', async () => {
     mockPrisma.vendingMachine.findMany.mockResolvedValue([
-      { machineId: 'SF001', store: 'Safeway' },
-      { machineId: 'SF002', store: 'Vons' },
+      { machineId: 'SF001', store: 'Safeway', address: '123 Main St' },
+      { machineId: 'SF002', store: 'Vons', address: '456 Oak Ave' },
     ]);
 
     const interaction = makeInteraction();
     await autocomplete(interaction as unknown as AutocompleteInteraction);
 
+    expect(mockPrisma.vendingMachine.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          machineMessages: { some: { channelId: 'ch-123' } },
+        }),
+      }),
+    );
     expect(interaction.respond).toHaveBeenCalledWith([
-      { name: 'SF001 — Safeway', value: 'SF001' },
-      { name: 'SF002 — Vons', value: 'SF002' },
+      { name: 'SF001 — Safeway (123 Main St)', value: 'SF001' },
+      { name: 'SF002 — Vons (456 Oak Ave)', value: 'SF002' },
     ]);
+  });
+
+  it('passes the focused value as a filter', async () => {
+    mockPrisma.vendingMachine.findMany.mockResolvedValue([]);
+    const interaction = makeInteraction();
+    (interaction.options.getFocused as jest.Mock).mockReturnValue('SF');
+
+    await autocomplete(interaction as unknown as AutocompleteInteraction);
+
+    expect(mockPrisma.vendingMachine.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          OR: [{ machineId: { contains: 'SF' } }, { store: { contains: 'SF' } }],
+        }),
+      }),
+    );
   });
 });
 

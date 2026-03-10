@@ -10,7 +10,7 @@ import prisma from '../lib/prisma';
 import { buildMachineMessage } from '../utils/machineEmbed';
 
 export const data = new SlashCommandBuilder()
-  .setName('set-crossroads')
+  .setName('set-cross-streets')
   .setDescription('Set the cross streets for a vending machine')
   .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
   .addStringOption((option) =>
@@ -29,16 +29,18 @@ export const data = new SlashCommandBuilder()
 
 export async function autocomplete(interaction: AutocompleteInteraction): Promise<void> {
   const focused = interaction.options.getFocused();
+  const channelId = interaction.channelId;
   const results = await prisma.vendingMachine.findMany({
     where: {
+      machineMessages: { some: { channelId } },
       OR: [{ machineId: { contains: focused } }, { store: { contains: focused } }],
     },
-    select: { machineId: true, store: true },
+    select: { machineId: true, store: true, address: true },
     orderBy: { machineId: 'asc' },
     take: 25,
   });
   await interaction.respond(
-    results.map((r) => ({ name: `${r.machineId} — ${r.store}`, value: r.machineId })),
+    results.map((r) => ({ name: `${r.machineId} — ${r.store} (${r.address})`, value: r.machineId })),
   );
 }
 
