@@ -6,6 +6,7 @@ function run(cmd) {
 }
 
 try {
+  run('npm install');
   run('npm run build');
   run('npm run db:push');
   run('npm run deploy:commands');
