@@ -9,6 +9,7 @@ try {
   run('npm install');
   run('npm run build');
   run('npm run db:push');
+  run('npm run db:seed');
   run('npm run deploy:commands');
   run('npm prune --omit=dev');
   run('node dist/index.js');
