@@ -1,7 +1,6 @@
 import {
   AutocompleteInteraction,
   ChatInputCommandInteraction,
-  PermissionFlagsBits,
   SlashCommandBuilder,
   TextChannel,
 } from 'discord.js';
@@ -12,7 +11,6 @@ import { buildMachineMessage } from '../utils/machineEmbed';
 export const data = new SlashCommandBuilder()
   .setName('set-cross-streets')
   .setDescription('Set the cross streets for a vending machine')
-  .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
   .addStringOption((option) =>
     option
       .setName('machine_id')
