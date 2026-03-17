@@ -22,7 +22,10 @@ const mockPrisma = prisma as unknown as {
 function makeInteraction(zip = '94105', channelId = 'ch1', guildId = 'guild1') {
   const mockSend = jest.fn().mockResolvedValue({ id: 'msg1' });
   return {
-    options: { getString: jest.fn().mockReturnValue(zip), getFocused: jest.fn().mockReturnValue(zip) },
+    options: {
+      getString: jest.fn().mockReturnValue(zip),
+      getFocused: jest.fn().mockReturnValue(zip),
+    },
     channelId,
     guildId,
     channel: { send: mockSend },
@@ -54,7 +57,25 @@ describe('autocomplete', () => {
 describe('execute', () => {
   it('deploys machines and replies with count', async () => {
     const machines = [
-      { id: 1, store: 'Safeway', address: '123 Main', city: 'SF', state: 'CA', zip: '94105', machineId: 'SF001', crossStreets: null, country: null, latitude: null, longitude: null, status: 'Online', lastCheckedAt: null, lastCheckedBy: null, restockedAt: null, createdAt: new Date(), updatedAt: new Date() },
+      {
+        id: 1,
+        store: 'Safeway',
+        address: '123 Main',
+        city: 'SF',
+        state: 'CA',
+        zip: '94105',
+        machineId: 'SF001',
+        crossStreets: null,
+        country: null,
+        latitude: null,
+        longitude: null,
+        status: 'Online',
+        lastCheckedAt: null,
+        lastCheckedBy: null,
+        restockedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
     ];
     mockPrisma.vendingMachine.findMany.mockResolvedValue(machines);
     mockPrisma.machineMessage.findMany.mockResolvedValue([]);
@@ -87,9 +108,7 @@ describe('execute', () => {
     await execute(interaction as unknown as ChatInputCommandInteraction);
 
     expect(interaction._mockSend).toHaveBeenCalledTimes(1);
-    expect(interaction.editReply).toHaveBeenCalledWith(
-      expect.stringContaining('skipped **1**'),
-    );
+    expect(interaction.editReply).toHaveBeenCalledWith(expect.stringContaining('skipped **1**'));
   });
 
   it('replies when no machines found for the zip code', async () => {

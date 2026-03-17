@@ -19,9 +19,19 @@ const mockPrisma = prisma as unknown as {
   machineMessage: { findMany: jest.Mock };
 };
 
-const mockMachine = { id: 1, machineId: 'SF001', store: 'Safeway', address: '123 Main St', crossStreets: null };
+const mockMachine = {
+  id: 1,
+  machineId: 'SF001',
+  store: 'Safeway',
+  address: '123 Main St',
+  crossStreets: null,
+};
 
-function makeInteraction(machineId = 'SF001', crossroads = 'Main St & Oak Ave', channelId = 'ch-123') {
+function makeInteraction(
+  machineId = 'SF001',
+  crossroads = 'Main St & Oak Ave',
+  channelId = 'ch-123',
+) {
   return {
     channelId,
     options: {
@@ -81,7 +91,10 @@ describe('autocomplete', () => {
 describe('execute', () => {
   it('updates crossStreets and replies with confirmation', async () => {
     mockPrisma.vendingMachine.findUnique.mockResolvedValue(mockMachine);
-    mockPrisma.vendingMachine.update.mockResolvedValue({ ...mockMachine, crossStreets: 'Main St & Oak Ave' });
+    mockPrisma.vendingMachine.update.mockResolvedValue({
+      ...mockMachine,
+      crossStreets: 'Main St & Oak Ave',
+    });
 
     const interaction = makeInteraction('SF001', 'Main St & Oak Ave');
     await execute(interaction as unknown as ChatInputCommandInteraction);
@@ -100,7 +113,10 @@ describe('execute', () => {
       ...mockMachine,
       crossStreets: 'Old St & Elm Ave',
     });
-    mockPrisma.vendingMachine.update.mockResolvedValue({ ...mockMachine, crossStreets: 'New Rd & Park Blvd' });
+    mockPrisma.vendingMachine.update.mockResolvedValue({
+      ...mockMachine,
+      crossStreets: 'New Rd & Park Blvd',
+    });
 
     const interaction = makeInteraction('SF001', 'New Rd & Park Blvd');
     await execute(interaction as unknown as ChatInputCommandInteraction);
@@ -118,8 +134,6 @@ describe('execute', () => {
     await execute(interaction as unknown as ChatInputCommandInteraction);
 
     expect(mockPrisma.vendingMachine.update).not.toHaveBeenCalled();
-    expect(interaction.editReply).toHaveBeenCalledWith(
-      expect.stringContaining('No machine found'),
-    );
+    expect(interaction.editReply).toHaveBeenCalledWith(expect.stringContaining('No machine found'));
   });
 });

@@ -38,7 +38,10 @@ export async function autocomplete(interaction: AutocompleteInteraction): Promis
     take: 25,
   });
   await interaction.respond(
-    results.map((r) => ({ name: `${r.machineId} — ${r.store} (${r.address})`, value: r.machineId })),
+    results.map((r) => ({
+      name: `${r.machineId} — ${r.store} (${r.address})`,
+      value: r.machineId,
+    })),
   );
 }
 
@@ -77,9 +80,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     }
   }
 
-  await interaction.editReply(
-    `Updated cross streets for \`${machineId}\` to: **${crossroads}**`,
-  );
+  await interaction.editReply(`Updated cross streets for \`${machineId}\` to: **${crossroads}**`);
 }
 
 export default { data, execute, autocomplete } satisfies Command;

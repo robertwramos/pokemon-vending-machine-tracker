@@ -284,12 +284,23 @@ function makePastCheckInModalInteraction(
   machineDbId = 1,
   utcMs = new Date('2024-01-15T18:30:00.000Z').getTime(),
   username = 'testuser',
+  userId = 'user123',
 ): ModalSubmitInteraction {
+  const mockChannel = {
+    isTextBased: jest.fn().mockReturnValue(true),
+    messages: {
+      fetch: jest.fn().mockResolvedValue({ edit: jest.fn().mockResolvedValue({}) }),
+    },
+  };
+
   return {
     customId: `past_checkin_modal:${machineDbId}:${utcMs}`,
-    user: { username },
+    user: { id: userId, username },
     fields: {
       getField: jest.fn().mockReturnValue({ values: selectedValues }),
+    },
+    client: {
+      channels: { fetch: jest.fn().mockResolvedValue(mockChannel) },
     },
     reply: jest.fn().mockResolvedValue({}),
   } as unknown as ModalSubmitInteraction;
@@ -332,18 +343,130 @@ describe('handleRestock', () => {
 
 describe('handlePastCheckInModalSubmit', () => {
   const utcMs = new Date('2024-01-15T18:30:00.000Z').getTime();
+  const lastCheckedBefore = new Date('2024-01-10T00:00:00.000Z');
+  const lastCheckedAfter = new Date('2024-01-20T00:00:00.000Z');
 
   beforeEach(() => {
     mockPrisma.vendingMachine.findUnique.mockResolvedValue({
-      id: 1, state: 'CA', latitude: null, longitude: null,
+      id: 1,
+      state: 'CA',
+      latitude: null,
+      longitude: null,
+      lastCheckedAt: lastCheckedBefore,
+      machineMessages: [],
+    });
+    mockPrisma.vendingMachine.update.mockResolvedValue({
+      id: 1,
+      state: 'CA',
+      latitude: null,
+      longitude: null,
+      lastCheckedAt: new Date(utcMs),
+      lastCheckedBy: 'user123',
+      machineMessages: [],
     });
   });
 
-  it('does NOT update lastCheckedAt or status on the machine', async () => {
-    const interaction = makePastCheckInModalInteraction(['pack'], 1, utcMs);
-    await handlePastCheckInModalSubmit(interaction);
+  describe('machine update', () => {
+    it('updates lastCheckedAt and status when checkedAt is after lastCheckedAt', async () => {
+      const interaction = makePastCheckInModalInteraction(
+        ['pack'],
+        1,
+        utcMs,
+        'testuser',
+        'user123',
+      );
+      await handlePastCheckInModalSubmit(interaction);
 
-    expect(mockPrisma.vendingMachine.update).not.toHaveBeenCalled();
+      expect(mockPrisma.vendingMachine.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1 },
+          data: expect.objectContaining({
+            status: 'Online',
+            lastCheckedAt: new Date(utcMs),
+            lastCheckedBy: 'user123',
+          }),
+        }),
+      );
+    });
+
+    it('does NOT update machine when checkedAt is before lastCheckedAt', async () => {
+      mockPrisma.vendingMachine.findUnique.mockResolvedValue({
+        id: 1,
+        state: 'CA',
+        latitude: null,
+        longitude: null,
+        lastCheckedAt: lastCheckedAfter,
+        machineMessages: [],
+      });
+
+      const interaction = makePastCheckInModalInteraction(['pack'], 1, utcMs);
+      await handlePastCheckInModalSubmit(interaction);
+
+      expect(mockPrisma.vendingMachine.update).not.toHaveBeenCalled();
+    });
+
+    it('updates machine when lastCheckedAt is null', async () => {
+      mockPrisma.vendingMachine.findUnique.mockResolvedValue({
+        id: 1,
+        state: 'CA',
+        latitude: null,
+        longitude: null,
+        lastCheckedAt: null,
+        machineMessages: [],
+      });
+
+      const interaction = makePastCheckInModalInteraction(['pack'], 1, utcMs);
+      await handlePastCheckInModalSubmit(interaction);
+
+      expect(mockPrisma.vendingMachine.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ lastCheckedAt: new Date(utcMs) }),
+        }),
+      );
+    });
+
+    it('edits channel messages when checkedAt is after lastCheckedAt', async () => {
+      const mockEdit = jest.fn().mockResolvedValue({});
+      const mockMsg = { edit: mockEdit };
+      const mockChannel = {
+        isTextBased: jest.fn().mockReturnValue(true),
+        messages: { fetch: jest.fn().mockResolvedValue(mockMsg) },
+      };
+
+      mockPrisma.vendingMachine.findUnique.mockResolvedValue({
+        id: 1,
+        state: 'CA',
+        latitude: null,
+        longitude: null,
+        lastCheckedAt: lastCheckedBefore,
+        machineMessages: [{ channelId: 'ch1', messageId: 'msg1' }],
+      });
+
+      const interaction = makePastCheckInModalInteraction(['pack'], 1, utcMs);
+      (interaction.client.channels.fetch as jest.Mock).mockResolvedValue(mockChannel);
+
+      await handlePastCheckInModalSubmit(interaction);
+
+      expect(interaction.client.channels.fetch).toHaveBeenCalledWith('ch1');
+      expect(mockChannel.messages.fetch).toHaveBeenCalledWith('msg1');
+      expect(mockEdit).toHaveBeenCalled();
+    });
+
+    it('does not edit channel messages when checkedAt is before lastCheckedAt', async () => {
+      mockPrisma.vendingMachine.findUnique.mockResolvedValue({
+        id: 1,
+        state: 'CA',
+        latitude: null,
+        longitude: null,
+        lastCheckedAt: lastCheckedAfter,
+        machineMessages: [{ channelId: 'ch1', messageId: 'msg1' }],
+      });
+
+      const interaction = makePastCheckInModalInteraction(['pack'], 1, utcMs);
+      await handlePastCheckInModalSubmit(interaction);
+
+      expect(interaction.client.channels.fetch).not.toHaveBeenCalled();
+    });
   });
 
   describe('with products selected', () => {

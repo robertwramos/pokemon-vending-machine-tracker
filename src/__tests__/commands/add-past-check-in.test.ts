@@ -53,7 +53,12 @@ beforeEach(() => {
 describe('autocomplete', () => {
   it('includes machineId, store, and crossStreets in label when crossStreets is set', async () => {
     mockPrisma.vendingMachine.findMany.mockResolvedValue([
-      { machineId: 'SF001', store: 'Safeway', crossStreets: 'Main St & Oak Ave', address: '123 Main St' },
+      {
+        machineId: 'SF001',
+        store: 'Safeway',
+        crossStreets: 'Main St & Oak Ave',
+        address: '123 Main St',
+      },
     ]);
 
     const interaction = makeInteraction('SF001', '2024-06-01 10:30 AM', 'ch1');

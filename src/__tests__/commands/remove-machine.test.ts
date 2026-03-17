@@ -76,9 +76,7 @@ describe('autocomplete', () => {
     (interaction.options.getFocused as jest.Mock).mockReturnValue('safe');
     await autocomplete(interaction as unknown as AutocompleteInteraction);
 
-    expect(interaction.respond).toHaveBeenCalledWith([
-      { name: 'SF001 — Safeway', value: 'SF001' },
-    ]);
+    expect(interaction.respond).toHaveBeenCalledWith([{ name: 'SF001 — Safeway', value: 'SF001' }]);
   });
 });
 
@@ -106,9 +104,7 @@ describe('execute', () => {
     await execute(interaction as unknown as ChatInputCommandInteraction);
 
     expect(mockPrisma.machineMessage.delete).not.toHaveBeenCalled();
-    expect(interaction.editReply).toHaveBeenCalledWith(
-      expect.stringContaining('No machine found'),
-    );
+    expect(interaction.editReply).toHaveBeenCalledWith(expect.stringContaining('No machine found'));
   });
 
   it('replies when the machine is not posted in this channel', async () => {
@@ -135,8 +131,6 @@ describe('execute', () => {
     await execute(interaction as unknown as ChatInputCommandInteraction);
 
     expect(mockPrisma.machineMessage.delete).toHaveBeenCalled();
-    expect(interaction.editReply).toHaveBeenCalledWith(
-      expect.stringContaining('Removed machine'),
-    );
+    expect(interaction.editReply).toHaveBeenCalledWith(expect.stringContaining('Removed machine'));
   });
 });

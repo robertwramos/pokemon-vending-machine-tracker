@@ -75,7 +75,8 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
 
   if (!utcDate) {
     await interaction.reply({
-      content: 'Invalid datetime format. Please use `YYYY-MM-DD HH:MM AM` (e.g. `2024-06-01 10:30 AM`).',
+      content:
+        'Invalid datetime format. Please use `YYYY-MM-DD HH:MM AM` (e.g. `2024-06-01 10:30 AM`).',
       ephemeral: true,
     });
     return;

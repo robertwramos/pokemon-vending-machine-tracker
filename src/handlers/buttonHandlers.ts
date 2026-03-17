@@ -170,13 +170,16 @@ export async function handleRestock(
   await interaction.reply({ content: '📦 Restock reported — thanks!', ephemeral: true });
 }
 
-
 // Returns fixed-width "YYYY-MM-DD HH:MM AM" (19 chars) in the given timezone
 function formatInTimezone(date: Date, timezone: string): string {
   const fmt = new Intl.DateTimeFormat('en-US', {
     timeZone: timezone,
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', hour12: true,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
   });
   const p: Record<string, string> = Object.fromEntries(
     fmt.formatToParts(date).map(({ type, value }) => [type, value]),
@@ -191,7 +194,6 @@ const CHECK_IN_PRODUCT_FIELDS: Array<{ key: string; label: string }> = [
   { key: 'boosterBoxAvailable', label: 'Booster Box' },
   { key: 'tinAvailable', label: 'Tin' },
 ];
-
 
 export async function handleCheckLogs(
   interaction: ButtonInteraction,
@@ -240,7 +242,11 @@ export async function handleCheckLogs(
   const embed = new EmbedBuilder()
     .setTitle('Check-in Logs — Last 2 Weeks')
     .setDescription(table)
-    .setFooter({ text: machine ? `${machine.store} · ${machine.address} · ${timezone}` : `Machine #${machineId}` })
+    .setFooter({
+      text: machine
+        ? `${machine.store} · ${machine.address} · ${timezone}`
+        : `Machine #${machineId}`,
+    })
     .setColor(0x3b4cca);
 
   try {
@@ -272,6 +278,7 @@ export async function handlePastCheckInModalSubmit(
   const finalProductValues = outOfStock ? [] : productValues;
 
   const username = interaction.user.username;
+  const userId = interaction.user.id;
 
   await prisma.machineCheckIn.create({
     data: {
@@ -287,9 +294,32 @@ export async function handlePastCheckInModalSubmit(
     },
   });
 
-  const machine = await prisma.vendingMachine.findUnique({ where: { id: machineId } });
+  const machine = await prisma.vendingMachine.findUnique({
+    where: { id: machineId },
+    include: { machineMessages: true },
+  });
   const timezone = machine ? getMachineTimezone(machine) : 'UTC';
   const localTime = formatInTimezone(checkedAt, timezone);
+
+  if (machine && checkedAt > (machine.lastCheckedAt ?? new Date(0))) {
+    const updatedMachine = await prisma.vendingMachine.update({
+      where: { id: machineId },
+      data: { status: 'Online', lastCheckedAt: checkedAt, lastCheckedBy: userId },
+    });
+
+    for (const machineMessage of machine.machineMessages) {
+      try {
+        const channel = await interaction.client.channels.fetch(machineMessage.channelId);
+        if (channel?.isTextBased()) {
+          const msg = await (channel as TextChannel).messages.fetch(machineMessage.messageId);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await msg.edit(buildMachineMessage(updatedMachine) as any);
+        }
+      } catch (err) {
+        console.error('Failed to refresh machine message after past check-in:', err);
+      }
+    }
+  }
 
   const replyContent = conflictWarning
     ? `⚠️ Past check-in recorded as **Out of Stock** at ${localTime} (${timezone}) — you had both products and Out of Stock selected.`
