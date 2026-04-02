@@ -18,7 +18,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "jest --passWithNoTests",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "sync:machines": "node dist/scripts/sync_machines.js"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
